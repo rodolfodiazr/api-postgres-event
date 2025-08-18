@@ -11,5 +11,5 @@ type Event struct {
 	Title       string
 	Description string
 	StartTime   time.Time
-	CreateAt    time.Time
+	CreatedAt   time.Time
 }

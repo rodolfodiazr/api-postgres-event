@@ -1,13 +1,29 @@
 package internal
 
 import (
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+	"database/sql"
+	"fmt"
+	"log"
+
+	_ "github.com/lib/pq"
 )
 
-func initDB() (*gorm.DB, error) {
-	return gorm.Open(postgres.New(postgres.Config{
-		DSN:                  "host=localhost user=gorm password=gorm dbname=gorm port=9920 sslmode=disable TimeZone=Asia/Shanghai",
-		PreferSimpleProtocol: true,
-	}), &gorm.Config{})
+func InitDB() (*sql.DB, error) {
+	var db *sql.DB
+	var err error
+
+	connStr := "postgres://[db-name]:@localhost:5432/eventsdb?sslmode=disable" // Move to environment variables
+	db, err = sql.Open("postgres", connStr)
+	if err != nil {
+		log.Fatalf("Failed to open DB: %v", err)
+		return db, err
+	}
+
+	if err := db.Ping(); err != nil {
+		log.Fatalf("Failed to connect: %v", err)
+		return db, err
+	}
+
+	fmt.Println("Connected to PostgreSQL!")
+	return db, nil
 }

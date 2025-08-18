@@ -6,6 +6,7 @@ import (
 	"ltk/internal"
 	"ltk/models"
 	"net/http"
+	"time"
 )
 
 var mux = http.NewServeMux()
@@ -38,15 +39,27 @@ func Get(w http.ResponseWriter, r *http.Request) {
 func Create(w http.ResponseWriter, r *http.Request) {
 	event := models.Event{}
 	if err := json.NewDecoder(r.Body).Decode(&event); err != nil {
-		fmt.Println("err: ", err)
+		json.NewEncoder(w).Encode(err.Error())
 		return
 	}
 
 	db, err := internal.InitDB()
 	if err != nil {
-		fmt.Println("err: ", err)
+		json.NewEncoder(w).Encode(err.Error())
 		return
 	}
 
-	db.Create(&event)
+	query := `
+        INSERT INTO events (title, description, start_time, created_at)
+        VALUES ($1, $2, $3, $4)
+        RETURNING id, created_at
+    `
+	err = db.QueryRow(query, event.Title, event.Description, event.StartTime, time.Now()).
+		Scan(&event.ID, event.CreatedAt)
+	if err != nil {
+		json.NewEncoder(w).Encode(err.Error())
+		return
+	}
+
+	json.NewEncoder(w).Encode(fmt.Sprintf("Event %v created", event.ID))
 }
